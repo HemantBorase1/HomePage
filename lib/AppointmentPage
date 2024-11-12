@@ -1,0 +1,225 @@
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(BookAppointmentApp());
+}
+
+class BookAppointmentApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Book an Appointment',
+      theme: ThemeData(
+        primarySwatch: Colors.teal,
+      ),
+      home: BookAppointmentScreen(),
+    );
+  }
+}
+
+class BookAppointmentScreen extends StatefulWidget {
+  @override
+  _BookAppointmentScreenState createState() => _BookAppointmentScreenState();
+}
+
+class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
+  final _searchController = TextEditingController();
+  List<Doctor> _doctors = [
+    Doctor(
+      name: 'Dr. John Smith',
+      specialty: 'General Surgeon',
+      phone: '0000 000 000',
+      email: 'your@gmail.com',
+      address: 'City, Country',
+      imageUrl: 'https://png.pngtree.com/png-clipart/20231002/original/pngtree-young-afro-professional-doctor-png-image_13227671.png',
+    ),
+    Doctor(
+      name: 'Dr. Sarah Johnson',
+      specialty: 'Pediatrician',
+      phone: '1111 111 111',
+      email: 'contact@sarah.com',
+      address: 'City, Country',
+      imageUrl: 'https://static.vecteezy.com/system/resources/thumbnails/026/375/249/small_2x/ai-generative-portrait-of-confident-male-doctor-in-white-coat-and-stethoscope-standing-with-arms-crossed-and-looking-at-camera-photo.jpg',
+    ),
+  ];
+  List<Doctor> _filteredDoctors = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _filteredDoctors = _doctors;
+  }
+
+  void _filterDoctors(String query) {
+    setState(() {
+      _filteredDoctors = _doctors
+          .where((doctor) =>
+      doctor.name.toLowerCase().contains(query.toLowerCase()) ||
+          doctor.specialty.toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            // Action for back button
+          },
+        ),
+        title: Text('Book an Appointment'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            // Search Bar
+            TextField(
+              controller: _searchController,
+              onChanged: _filterDoctors,
+              decoration: InputDecoration(
+                hintText: 'Search Doctor / Hospitals',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30.0),
+                ),
+                filled: true,
+                fillColor: Colors.grey[200],
+              ),
+            ),
+            SizedBox(height: 16),
+
+            // Doctor Cards List
+            Expanded(
+              child: ListView.builder(
+                itemCount: _filteredDoctors.length,
+                itemBuilder: (context, index) {
+                  return DoctorCard(doctor: _filteredDoctors[index]);
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class Doctor {
+  final String name;
+  final String specialty;
+  final String phone;
+  final String email;
+  final String address;
+  final String imageUrl;
+
+  Doctor({
+    required this.name,
+    required this.specialty,
+    required this.phone,
+    required this.email,
+    required this.address,
+    required this.imageUrl,
+  });
+}
+
+class DoctorCard extends StatelessWidget {
+  final Doctor doctor;
+
+  const DoctorCard({required this.doctor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: EdgeInsets.symmetric(vertical: 8.0),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16.0),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Doctor Image
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12.0),
+              child: Image.network(
+                doctor.imageUrl,
+                height: 80,
+                width: 80,
+                fit: BoxFit.cover,
+              ),
+            ),
+            SizedBox(width: 16),
+
+            // Doctor Details
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    doctor.name,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2196F3),
+                    ),
+                  ),
+                  Text(
+                    doctor.specialty,
+                    style: TextStyle(color: Color(0xFF2196F3)),
+                  ),
+                  SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.phone, size: 16, color: Colors.grey),
+                      SizedBox(width: 4),
+                      Text(doctor.phone),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Icon(Icons.email, size: 16, color: Colors.grey),
+                      SizedBox(width: 4),
+                      Text(doctor.email),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Icon(Icons.location_on, size: 16, color: Colors.grey),
+                      SizedBox(width: 4),
+                      Text(doctor.address),
+                    ],
+                  ),
+                  SizedBox(height: 8),
+                  // Book Appointment Button
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFF2196F3), // Updated color property
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                      onPressed: () {
+                        // Action for Book Appointment button
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Booked an appointment with ${doctor.name}')),
+                        );
+                      },
+                      child: Text('Book Appointment'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
