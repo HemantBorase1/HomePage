@@ -1,21 +1,13 @@
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(MyApp());
-}
+void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       home: HomePage(),
-      routes: {
-        '/bedsAvailability': (context) => BedsAvailabilityPage(),
-        '/opd': (context) => OpdPage(),
-        '/labXRay': (context) => LabXRayPage(),
-        '/bookAppointment': (context) => BookAppointmentPage(),
-        '/emergencyServices': (context) => EmergencyServicesPage(),
-      },
     );
   }
 }
@@ -26,152 +18,191 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final PageController _pageController = PageController();
+  int _selectedIndex = 0;
+
+  static List<Widget> _pages = <Widget>[
+    HomeScreen(),
+    VideoCallScreen(),
+    AiBotScreen(),
+    HistoryScreen(),
+    MedicalReportScreen(),
+  ];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.account_circle, color: Colors.black, size: 30),
-                SizedBox(width: 8),
-                Text("Hey, Joy", style: TextStyle(color: Colors.black)),
-              ],
-            ),
-            Icon(Icons.notifications, color: Colors.black, size: 30),
-          ],
-        ),
-      ),
-      body: Column(
-        children: [
-          // Scrolling Banner Section
-          Container(
-            height: 150.0,
-            child: PageView(
-              controller: _pageController,
-              children: [
-                BannerSlide(imagePath: 'assets/background.png', title: 'Welcome to our Clinic'),
-                BannerSlide(imagePath: 'assets/ap_banner.jpg', title: 'Book Appointments Easily'),
-                BannerSlide(imagePath: 'assets/Emergency.jpg', title: '24/7 Emergency Services'),
-                BannerSlide(imagePath: 'assets/Xray.png', title: 'Advanced Lab & X-Ray'),
-              ],
-            ),
-          ),
-          // Services Section
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                "Our Services",
-                style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ),
-          SizedBox(height: 8.0),
-          // Grid for Service Cards
-          Expanded(
-            child: GridView.count(
-              padding: EdgeInsets.symmetric(horizontal: 16.0),
-              crossAxisCount: 2,
-              crossAxisSpacing: 10.0,
-              mainAxisSpacing: 10.0,
-              children: [
-                ServiceCard(
-                  title: "Beds Availability",
-                  route: '/bedsAvailability',
-                  imagePath: 'assets/Bed.jpg',
-                ),
-                ServiceCard(
-                  title: "OPD",
-                  route: '/opd',
-                  imagePath: 'assets/Opd.png',
-                ),
-                ServiceCard(
-                  title: "Lab X-Ray",
-                  route: '/labXRay',
-                  imagePath: 'assets/Xray.png',
-                ),
-                ServiceCard(
-                  title: "Book Appointment",
-                  route: '/bookAppointment',
-                  imagePath: 'assets/ap_banner.jpg',
-                ),
-                ServiceCard(
-                  title: "Emergency Services",
-                  route: '/emergencyServices',
-                  imagePath: 'assets/Emergency.jpg',
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+
+      body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        currentIndex: _selectedIndex,
+        selectedItemColor: Colors.blueAccent,
+        onTap: _onItemTapped,
         items: [
-          BottomNavigationBarItem(
-            backgroundColor: Colors.blueAccent,
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            backgroundColor: Colors.blueAccent,
-            icon: Icon(Icons.access_time),
-            label: 'History',
-          ),
-          BottomNavigationBarItem(
-            backgroundColor: Colors.blueAccent,
-            icon: Icon(Icons.chat_bubble_outline_rounded),
-            label: 'AI ChatBot',
-          ),
-          BottomNavigationBarItem(
-            backgroundColor: Colors.blueAccent,
-            icon: Icon(Icons.message),
-            label: 'Messages',
-          ),
-          BottomNavigationBarItem(
-            backgroundColor: Colors.blueAccent,
-            icon: Icon(Icons.account_circle),
-            label: 'Profile',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.video_call), label: 'Video Call'),
+          BottomNavigationBarItem(icon: Icon(Icons.smart_toy), label: 'AI Bot'),
+          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
+          BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Medical Report'),
         ],
       ),
     );
   }
 }
 
-// Custom Banner Slide Widget
-class BannerSlide extends StatelessWidget {
-  final String imagePath;
-  final String title;
+// Home Screen with Horizontal Banner Slider and Services Grid
+class HomeScreen extends StatefulWidget {
+  @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
 
-  BannerSlide({required this.imagePath, required this.title});
+class _HomeScreenState extends State<HomeScreen> {
+  final PageController _pageController = PageController();
+  int _currentPage = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+     
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: Icon(Icons.person, color: Colors.black),
+        title: Text("Hey, Joy", style: TextStyle(color: Colors.black)),
+        actions: [
+          Icon(Icons.notifications, color: Colors.black),
+          SizedBox(width: 16),
+        ],
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            // Horizontal Banner Slider with PageView
+            Container(
+              height: 200,
+              child: Stack(
+                children: [
+                  PageView(
+                    controller: _pageController,
+                    scrollDirection: Axis.horizontal,  // Changed to horizontal
+                    onPageChanged: (int page) {
+                      setState(() {
+                        _currentPage = page;
+                      });
+                    },
+                    children: [
+                      BannerImage(imagePath: 'assets/background.png'),
+                      BannerImage(imagePath: 'assets/Bed.jpg'),
+                      BannerImage(imagePath: 'assets/Emergency.jpg'),
+
+                    ],
+                  ),
+                  // Horizontal Page Indicator
+                  Positioned(
+                    bottom: 16,
+                    left: 0,
+                    right: 0,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(3, (index) {
+                        return Container(
+                          margin: EdgeInsets.symmetric(horizontal: 4),
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: _currentPage == index ? Colors.white : Colors.white54,
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Services Section
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text("Our Services", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  TextButton(onPressed: () {}, child: Text("See All")),
+                ],
+              ),
+            ),
+            // Service Tiles
+            GridView.count(
+              crossAxisCount: 3,
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              padding: EdgeInsets.all(8),
+              children: [
+                ServiceTile(title: "Beds Availability", image: 'assets/Bed.jpg'),
+                ServiceTile(title: "OPD's Schemes", image: 'assets/Opd.png'),
+                ServiceTile(title: "X-Ray", image: 'assets/Xray.png'),
+                ServiceTile(title: "Book Appointment", image: 'assets/appoint.jpg'),
+                ServiceTile(title: "Emergency Services", image: 'assets/Emergency.jpg'),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Widget for each banner image in the horizontal slider
+class BannerImage extends StatelessWidget {
+  final String imagePath;
+
+  BannerImage({required this.imagePath});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8.0),
         image: DecorationImage(
           image: AssetImage(imagePath),
           fit: BoxFit.cover,
         ),
       ),
+    );
+  }
+}
+
+// Service Tile with Background Image
+class ServiceTile extends StatelessWidget {
+  final String title;
+  final String image;
+
+  ServiceTile({required this.title, required this.image});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        image: DecorationImage(
+          image: AssetImage(image),
+          fit: BoxFit.cover,
+        ),
+      ),
       child: Center(
-        child: Text(
-          title,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 20.0,
-            fontWeight: FontWeight.bold,
-            backgroundColor: Colors.black.withOpacity(0.5),
+        child: Container(
+
+          padding: EdgeInsets.all(4),
+          child: Text(
+            title,
+            style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
           ),
         ),
       ),
@@ -179,109 +210,42 @@ class BannerSlide extends StatelessWidget {
   }
 }
 
-// Custom Service Card Widget
-class ServiceCard extends StatelessWidget {
-  final String title;
-  final String route;
-  final String imagePath;
-
-  ServiceCard({required this.title, required this.route, required this.imagePath});
-
+// Video Call Screen
+class VideoCallScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => Navigator.pushNamed(context, route),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8.0),
-        ),
-        child: Stack(
-          children: [
-            // Background image
-            Positioned.fill(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8.0),
-                child: Image.asset(
-                  imagePath,
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-            // Optional overlay for better text readability
-            Positioned.fill(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-              ),
-            ),
-            // Centered title text
-            Center(
-              child: Text(
-                title,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16.0,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return Scaffold(
+      body: Center(child: Text("Video Call Screen")),
     );
   }
 }
 
-// Example Pages for Navigation
-class BedsAvailabilityPage extends StatelessWidget {
+// AI Bot Screen
+class AiBotScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Beds Availability")),
-      body: Center(child: Text("Beds Availability Page")),
+      body: Center(child: Text("AI Bot Screen")),
     );
   }
 }
 
-class OpdPage extends StatelessWidget {
+// History Screen
+class HistoryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("OPD")),
-      body: Center(child: Text("OPD Page")),
+      body: Center(child: Text("History Screen")),
     );
   }
 }
 
-class LabXRayPage extends StatelessWidget {
+// Medical Report Screen
+class MedicalReportScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Lab X-Ray")),
-      body: Center(child: Text("Lab X-Ray Page")),
-    );
-  }
-}
-
-class BookAppointmentPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text("Book Appointment")),
-      body: Center(child: Text("Book Appointment Page")),
-    );
-  }
-}
-
-class EmergencyServicesPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text("Emergency Services")),
-      body: Center(child: Text("Emergency Services Page")),
+      body: Center(child: Text("Medical Report Screen")),
     );
   }
 }
