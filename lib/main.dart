@@ -1,31 +1,42 @@
 import 'package:flutter/material.dart';
 
-void main() => runApp(MyApp());
+void main() {
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: HomePage(),
+      title: 'Health App',
+      initialRoute: '/',
+      routes: {
+        '/': (context) => HealthAppHome(),
+        '/video-call': (context) => VideoCallPage(),
+        '/ai-bot': (context) => AIPage(),
+        '/history': (context) => HistoryPage(),
+        '/medical-report': (context) => MedicalReportPage(),
+        '/profile': (context) => ProfilePage(),
+      },
     );
   }
 }
 
-class HomePage extends StatefulWidget {
+class HealthAppHome extends StatefulWidget {
   @override
-  _HomePageState createState() => _HomePageState();
+  _HealthAppHomeState createState() => _HealthAppHomeState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HealthAppHomeState extends State<HealthAppHome> {
   int _selectedIndex = 0;
 
-  static List<Widget> _pages = <Widget>[
-    HomeScreen(),
-    VideoCallScreen(),
-    AiBotScreen(),
-    HistoryScreen(),
-    MedicalReportScreen(),
+  final List<Widget> _pages = [
+    HomePage(),
+    VideoCallPage(),
+    AIPage(),
+    HistoryPage(),
+    MedicalReportPage(),
   ];
 
   void _onItemTapped(int index) {
@@ -37,215 +48,264 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.blueAccent,
         onTap: _onItemTapped,
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: Colors.blue,
+        unselectedItemColor: Colors.grey,
         items: [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.video_call), label: 'Video Call'),
-          BottomNavigationBarItem(icon: Icon(Icons.smart_toy), label: 'AI Bot'),
-          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
-          BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Medical Report'),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+          BottomNavigationBarItem(icon: Icon(Icons.video_call), label: "Video Call"),
+          BottomNavigationBarItem(icon: Icon(Icons.smart_toy), label: "AI Bot"),
+          BottomNavigationBarItem(icon: Icon(Icons.history), label: "History"),
+          BottomNavigationBarItem(icon: Icon(Icons.file_copy), label: "Medical Report"),
         ],
       ),
     );
   }
 }
 
-// Home Screen with Horizontal Banner Slider and Services Grid
-class HomeScreen extends StatefulWidget {
-  @override
-  _HomeScreenState createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  final PageController _pageController = PageController();
-  int _currentPage = 0;
+class HomePage extends StatelessWidget {
+  final List<String> bannerImages = [
+    'https://www.shutterstock.com/image-photo/doctor-utilizing-advanced-digital-tablet-600nw-2481904799.jpg', // Replace with real URLs
+    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTuJJmUwGfwai4FVt25BlC8q3nQFNDVblY_SB1sDTqd9htMrOh1BYjCdotWRlFtZxr3I8Q&usqp=CAU',
+    'https://www.shutterstock.com/image-vector/medicine-paramedics-ambulance-concept-emergency-260nw-1946292013.jpg',
+  ];
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-     
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: Icon(Icons.person, color: Colors.black),
-        title: Text("Hey, Joy", style: TextStyle(color: Colors.black)),
-        actions: [
-          Icon(Icons.notifications, color: Colors.black),
-          SizedBox(width: 16),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Horizontal Banner Slider with PageView
-            Container(
-              height: 200,
-              child: Stack(
-                children: [
-                  PageView(
-                    controller: _pageController,
-                    scrollDirection: Axis.horizontal,  // Changed to horizontal
-                    onPageChanged: (int page) {
-                      setState(() {
-                        _currentPage = page;
-                      });
-                    },
-                    children: [
-                      BannerImage(imagePath: 'assets/background.png'),
-                      BannerImage(imagePath: 'assets/Bed.jpg'),
-                      BannerImage(imagePath: 'assets/Emergency.jpg'),
-
-                    ],
-                  ),
-                  // Horizontal Page Indicator
-                  Positioned(
-                    bottom: 16,
-                    left: 0,
-                    right: 0,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(3, (index) {
-                        return Container(
-                          margin: EdgeInsets.symmetric(horizontal: 4),
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: _currentPage == index ? Colors.white : Colors.white54,
-                          ),
-                        );
-                      }),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Services Section
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text("Our Services", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  TextButton(onPressed: () {}, child: Text("See All")),
-                ],
-              ),
-            ),
-            // Service Tiles
-            GridView.count(
-              crossAxisCount: 3,
-              shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
-              padding: EdgeInsets.all(8),
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Upper Section with Hello Message, User Icon, and Notification Bell
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                ServiceTile(title: "Beds Availability", image: 'assets/Bed.jpg'),
-                ServiceTile(title: "OPD's Schemes", image: 'assets/Opd.png'),
-                ServiceTile(title: "X-Ray", image: 'assets/Xray.png'),
-                ServiceTile(title: "Book Appointment", image: 'assets/appoint.jpg'),
-                ServiceTile(title: "Emergency Services", image: 'assets/Emergency.jpg'),
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(context, '/profile');
+                      },
+                      child: CircleAvatar(
+                        backgroundColor: Colors.grey[300],
+                        child: Icon(Icons.account_circle, color: Colors.black, size: 30),
+                      ),
+                    ),
+                    SizedBox(width: 10),
+                    Text(
+                      "Hello, Joy",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                IconButton(
+                  icon: Icon(Icons.notifications, color: Colors.black),
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("No new notifications")),
+                    );
+                  },
+                ),
               ],
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// Widget for each banner image in the horizontal slider
-class BannerImage extends StatelessWidget {
-  final String imagePath;
-
-  BannerImage({required this.imagePath});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage(imagePath),
-          fit: BoxFit.cover,
-        ),
-      ),
-    );
-  }
-}
-
-// Service Tile with Background Image
-class ServiceTile extends StatelessWidget {
-  final String title;
-  final String image;
-
-  ServiceTile({required this.title, required this.image});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        image: DecorationImage(
-          image: AssetImage(image),
-          fit: BoxFit.cover,
-        ),
-      ),
-      child: Center(
-        child: Container(
-
-          padding: EdgeInsets.all(4),
-          child: Text(
-            title,
-            style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold),
-            textAlign: TextAlign.center,
           ),
+
+          // Banner Section with Horizontal Scrolling
+          SizedBox(
+            height: 210,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: bannerImages.length,
+              itemBuilder: (context, index) {
+                return Container(
+                  width: MediaQuery.of(context).size.width,
+                  margin: EdgeInsets.only(right: 8),
+                  child: Image.network(
+                    bannerImages[index],
+                    fit: BoxFit.cover,
+                  ),
+                );
+              },
+            ),
+          ),
+
+          // Services Section
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Our Services",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    // Add functionality for "See All"
+                  },
+                  child: Text("See All"),
+                ),
+              ],
+            ),
+          ),
+          // Expanded Service Boxes
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildEnhancedServiceCard("Beds Availability", "https://www.shutterstock.com/image-vector/hospital-ward-interior-patient-beds-260nw-2512612813.jpg"),
+                _buildEnhancedServiceCard("OPD's Schemes", "https://static.vecteezy.com/system/resources/previews/032/050/259/non_2x/doctor-and-girl-patient-at-desk-in-hospital-office-clinic-visit-for-exam-meeting-with-physician-conversation-with-medic-about-diagnosis-results-vector.jpg"),
+                _buildEnhancedServiceCard("X-Ray", "https://www.shutterstock.com/image-vector/xray-pictures-vector-set-medical-600w-2410269123.jpg"),
+              ],
+            ),
+          ),
+
+          // Buttons
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildEnhancedActionButton(
+                  label: "Book Appointment",
+                  color: Colors.blue,
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Book Appointment Page Coming Soon!")),
+                    );
+                  },
+                ),
+                SizedBox(width: 10),
+                _buildEnhancedActionButton(
+                  label: "Emergency Services",
+                  color: Colors.red,
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Emergency Services Page Coming Soon!")),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEnhancedServiceCard(String title, String imageUrl) {
+    return Expanded(
+      child: Column(
+        children: [
+          Card(
+            elevation: 5,
+            child: Container(
+              height: 160, // Increased height for more visibility
+              width: double.infinity,
+              child: Image.network(
+                imageUrl,
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          SizedBox(height: 10),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEnhancedActionButton({
+    required String label,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return Expanded(
+      child: ElevatedButton(
+        style: ButtonStyle(
+          backgroundColor: MaterialStateProperty.all(color),
+          shape: MaterialStateProperty.all(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20), // Rounded edges for appeal
+            ),
+          ),
+          padding: MaterialStateProperty.all(EdgeInsets.symmetric(vertical: 18)), // Larger button
+        ),
+        onPressed: onPressed,
+        child: Text(
+          label,
+          style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ),
     );
   }
 }
 
-// Video Call Screen
-class VideoCallScreen extends StatelessWidget {
+// Pages for Navigation
+class VideoCallPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(child: Text("Video Call Screen")),
+      appBar: AppBar(title: Text("Video Call")),
+      body: Center(child: Text("Video Call Page")),
     );
   }
 }
 
-// AI Bot Screen
-class AiBotScreen extends StatelessWidget {
+class AIPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(child: Text("AI Bot Screen")),
+      appBar: AppBar(title: Text("AI Bot")),
+      body: Center(child: Text("AI Bot Page")),
     );
   }
 }
 
-// History Screen
-class HistoryScreen extends StatelessWidget {
+class HistoryPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(child: Text("History Screen")),
+      appBar: AppBar(title: Text("History")),
+      body: Center(child: Text("History Page")),
     );
   }
 }
 
-// Medical Report Screen
-class MedicalReportScreen extends StatelessWidget {
+class MedicalReportPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(child: Text("Medical Report Screen")),
+      appBar: AppBar(title: Text("Medical Report")),
+      body: Center(child: Text("Medical Report Page")),
     );
   }
 }
+
+class ProfilePage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("Profile")),
+      body: Center(child: Text("User Profile Page")),
+    );
+  }
+}
+
