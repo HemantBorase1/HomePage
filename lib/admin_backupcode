@@ -1,0 +1,286 @@
+import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Supabase.initialize(
+    url: 'https://cscsfebshdqwpyeyyxmh.supabase.co', // Replace with your Supabase URL
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzY3NmZWJzaGRxd3B5ZXl5eG1oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzI3MTY0MjMsImV4cCI6MjA0ODI5MjQyM30.BYQRz1x54DqqgSOExs-vnWloi2fVCkQHvre4G1nbtxY', // Replace with your Supabase anon key
+  );
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Hospital Management',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: AdminPage(),
+    );
+  }
+}
+
+class AdminPage extends StatefulWidget {
+  @override
+  _AdminPageState createState() => _AdminPageState();
+}
+
+class _AdminPageState extends State<AdminPage> {
+  final SupabaseClient supabase = Supabase.instance.client;
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _subDistrictController = TextEditingController();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  bool _isPasswordHidden = true; // Show/hide password state
+  String? _loggedInSubDistrict; // To store the logged-in admin's sub-district
+  bool _isLoading = false;
+  String _errorMessage = '';
+  List<dynamic> _hospitals = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSession();
+  }
+
+  Future<void> _loadSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    final loggedInSubDistrict = prefs.getString('sub_district');
+    if (loggedInSubDistrict != null) {
+      setState(() {
+        _loggedInSubDistrict = loggedInSubDistrict;
+      });
+      _fetchHospitals(); // Fetch hospitals for the logged-in sub-district
+    }
+  }
+
+  Future<void> _saveSession(String subDistrict) async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setString('sub_district', subDistrict);
+  }
+
+  Future<void> _removeSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.remove('sub_district');
+  }
+
+  Future<void> _login() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
+
+    try {
+      final response = await supabase
+          .from('superadmin')
+          .select()
+          .eq('username', _usernameController.text)
+          .eq('password', _passwordController.text)
+          .eq('sub_district', _subDistrictController.text)
+          .single();
+
+      if (response == null) {
+        setState(() {
+          _errorMessage = 'Invalid credentials or sub-district.';
+        });
+        return;
+      }
+
+      setState(() {
+        _loggedInSubDistrict = response['sub_district'];
+        _saveSession(_loggedInSubDistrict!);
+        _fetchHospitals();
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Login failed: $e';
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _fetchHospitals() async {
+    if (_loggedInSubDistrict == null) return;
+
+    final response = await supabase
+        .from('hospitals')
+        .select('*')
+        .eq('sub_district', _loggedInSubDistrict!)
+        .eq('is_accepted', false);
+
+    setState(() {
+      _hospitals = response ?? [];
+    });
+  }
+
+  Future<void> _acceptHospital(int id) async {
+    final response = await supabase
+        .from('hospitals')
+        .update({'is_accepted': true})
+        .eq('id', id);
+
+    if (response.error == null) {
+      setState(() {
+        _hospitals.removeWhere((hospital) => hospital['id'] == id);
+      });
+    } else {
+      print('Error: ${response.error!.message}');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          _loggedInSubDistrict == null
+              ? 'Admin Login'
+              : 'Hospitals in $_loggedInSubDistrict',
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.blue,
+        actions: _loggedInSubDistrict != null
+            ? [
+                IconButton(
+                  icon: Icon(Icons.logout),
+                  onPressed: () async {
+                    setState(() {
+                      _loggedInSubDistrict = null;
+                      _hospitals.clear();
+                      _usernameController.clear();
+                      _passwordController.clear();
+                      _subDistrictController.clear();
+                    });
+                    await _removeSession();
+                  },
+                ),
+              ]
+            : null,
+      ),
+      body: _loggedInSubDistrict == null
+          ? _buildLoginForm()
+          : _buildHospitalList(),
+    );
+  }
+
+  Widget _buildLoginForm() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            TextFormField(
+              controller: _usernameController,
+              decoration: InputDecoration(
+                labelText: 'Username',
+                border: OutlineInputBorder(),
+              ),
+              validator: (value) =>
+                  value!.isEmpty ? 'Enter your username' : null,
+            ),
+            SizedBox(height: 20),
+            TextFormField(
+              controller: _passwordController,
+              decoration: InputDecoration(
+                labelText: 'Password',
+                border: OutlineInputBorder(),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _isPasswordHidden
+                        ? Icons.visibility
+                        : Icons.visibility_off,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _isPasswordHidden = !_isPasswordHidden;
+                    });
+                  },
+                ),
+              ),
+              obscureText: _isPasswordHidden,
+              validator: (value) =>
+                  value!.isEmpty ? 'Enter your password' : null,
+            ),
+            SizedBox(height: 20),
+            TextFormField(
+              controller: _subDistrictController,
+              decoration: InputDecoration(
+                labelText: 'Sub-district',
+                border: OutlineInputBorder(),
+              ),
+              validator: (value) =>
+                  value!.isEmpty ? 'Enter your sub-district' : null,
+            ),
+            SizedBox(height: 20),
+            _isLoading
+                ? CircularProgressIndicator()
+                : ElevatedButton(
+                    onPressed: _login,
+                    child: Text('Login'),
+                  ),
+            if (_errorMessage.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 20),
+                child: Text(
+                  _errorMessage,
+                  style: TextStyle(color: Colors.red),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHospitalList() {
+    return _hospitals.isEmpty
+        ? Center(child: Text('No pending requests'))
+        : ListView.builder(
+            itemCount: _hospitals.length,
+            itemBuilder: (context, index) {
+              final hospital = _hospitals[index];
+              return Card(
+                margin: EdgeInsets.all(10),
+                child: Padding(
+                  padding: const EdgeInsets.all(15.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Name: ${hospital['hospital_name']}',
+                        style: TextStyle(
+                            fontSize: 17, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        'Email: ${hospital['email']}',
+                        style: TextStyle(fontSize: 15),
+                      ),
+                      Text('Pin Code: ${hospital['pincode']}'),
+                      Text('Contact: ${hospital['phone_no']}'),
+                      SizedBox(height: 10),
+                      ElevatedButton(
+                        onPressed: () => _acceptHospital(hospital['id']),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.lightBlue,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: Text('Accept'),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+  }
+}
