@@ -1,0 +1,233 @@
+import 'package:flutter/material.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+class SchemeRegistrationScreen extends StatefulWidget {
+  const SchemeRegistrationScreen({Key? key}) : super(key: key);
+
+  @override
+  State<SchemeRegistrationScreen> createState() =>
+      _SchemeRegistrationScreenState();
+}
+
+class _SchemeRegistrationScreenState extends State<SchemeRegistrationScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _controllers = {
+    'scheme_name': TextEditingController(),
+    'description': TextEditingController(),
+    'tags': TextEditingController(),
+  };
+
+  File? _selectedImage;
+  final ImagePicker _imagePicker = ImagePicker();
+
+  String? _selectedOption;
+  String? _selectedState;
+  String? _selectedDistrict;
+  String? _selectedSubDistrict;
+  bool _isCheckboxChecked = false;
+
+  final List<String> _options = ['State', 'District', 'Sub-district'];
+  final List<String> _states = ['State 1', 'State 2', 'State 3'];
+  final List<String> _districts = ['District 1', 'District 2', 'District 3'];
+  final List<String> _subDistricts = ['Sub-district 1', 'Sub-district 2', 'Sub-district 3'];
+
+  Future<void> _pickImage() async {
+    final pickedImage = await _imagePicker.pickImage(source: ImageSource.gallery);
+    if (pickedImage != null) {
+      setState(() {
+        _selectedImage = File(pickedImage.path);
+      });
+    }
+  }
+
+  Future<void> _submitForm() async {
+    if (!_formKey.currentState!.validate()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill all required fields.')),
+      );
+      return;
+    }
+
+    final supabase = Supabase.instance.client;
+
+    final data = {
+      'scheme_name': _controllers['scheme_name']!.text,
+      'description': _controllers['description']!.text,
+      'tags': _controllers['tags']!.text,
+      'selected_option': _selectedOption,
+      'state': _selectedState,
+      'district': _selectedDistrict,
+      'sub_district': _selectedSubDistrict,
+    };
+
+    try {
+      // Insert data into Supabase table
+      final response = await supabase.from('schemes').insert(data);
+
+      if (response.error == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Form submitted successfully!')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${response.error!.message}')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Unexpected Error: $e')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Add a Scheme'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(30.0),
+        child: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                _buildTextField('Scheme Name', 'scheme_name'),
+                const SizedBox(height: 20),
+                _buildTextField('Description', 'description', maxLines: 3),
+                const SizedBox(height: 20),
+                _buildTextField('Tags', 'tags'),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: _pickImage,
+                  child: const Text('Upload Image for Banner'),
+                ),
+                if (_selectedImage != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Text(
+                      'Selected Image: ${_selectedImage!.path.split('/').last}',
+                      style: const TextStyle(fontSize: 14, color: Colors.green),
+                    ),
+                  ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Checkbox(
+                      value: _isCheckboxChecked,
+                      onChanged: (value) {
+                        setState(() {
+                          _isCheckboxChecked = value!;
+                          if (_isCheckboxChecked) {
+                            _selectedOption = null;
+                          }
+                        });
+                      },
+                    ),
+                    const Text('Disable Select Location Type'),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                DropdownButtonFormField<String>(
+                  value: _selectedOption,
+                  decoration: const InputDecoration(
+                    labelText: 'Select Location Type',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: _options
+                      .map((option) => DropdownMenuItem(
+                    value: option,
+                    child: Text(option),
+                  ))
+                      .toList(),
+                  onChanged: _isCheckboxChecked
+                      ? null
+                      : (value) {
+                    setState(() {
+                      _selectedOption = value;
+                    });
+                  },
+                ),
+                const SizedBox(height: 20),
+                if (_selectedOption == 'State')
+                  _buildDropdown(
+                    label: 'State',
+                    value: _selectedState,
+                    items: _states,
+                    onChanged: (value) => setState(() => _selectedState = value),
+                  )
+                else if (_selectedOption == 'District')
+                  _buildDropdown(
+                    label: 'District',
+                    value: _selectedDistrict,
+                    items: _districts,
+                    onChanged: (value) => setState(() => _selectedDistrict = value),
+                  )
+                else if (_selectedOption == 'Sub-district')
+                    _buildDropdown(
+                      label: 'Sub-district',
+                      value: _selectedSubDistrict,
+                      items: _subDistricts,
+                      onChanged: (value) => setState(() => _selectedSubDistrict = value),
+                    ),
+                const SizedBox(height: 20),
+                Center(
+                  child: ElevatedButton(
+                    onPressed: _submitForm,
+                    child: const Text('Submit'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(String label, String key, {int maxLines = 1}) {
+    return TextFormField(
+      controller: _controllers[key],
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+      ),
+      maxLines: maxLines,
+      validator: (value) =>
+      value == null || value.isEmpty ? 'Please enter ${label.toLowerCase()}' : null,
+    );
+  }
+
+  Widget _buildDropdown({
+    required String label,
+    required String? value,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return DropdownButtonFormField<String>(
+      value: value,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+      ),
+      items: items
+          .map((item) => DropdownMenuItem(
+        value: item,
+        child: Text(item),
+      ))
+          .toList(),
+      onChanged: onChanged,
+    );
+  }
+
+  @override
+  void dispose() {
+    for (var controller in _controllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+}
