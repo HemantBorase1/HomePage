@@ -22,16 +22,21 @@ class _SchemeRegistrationScreenState extends State<SchemeRegistrationScreen> {
   File? _selectedImage;
   final ImagePicker _imagePicker = ImagePicker();
 
+  String? _selectedSchemeType; // Dropdown for scheme type
   String? _selectedOption;
   String? _selectedState;
   String? _selectedDistrict;
   String? _selectedSubDistrict;
-  bool _isCheckboxChecked = false;
 
+  final List<String> _schemeTypes = ['National Scheme', 'Select Location Scheme'];
   final List<String> _options = ['State', 'District', 'Sub-district'];
   final List<String> _states = ['State 1', 'State 2', 'State 3'];
   final List<String> _districts = ['District 1', 'District 2', 'District 3'];
-  final List<String> _subDistricts = ['Sub-district 1', 'Sub-district 2', 'Sub-district 3'];
+  final List<String> _subDistricts = [
+    'Sub-district 1',
+    'Sub-district 2',
+    'Sub-district 3'
+  ];
 
   Future<void> _pickImage() async {
     final pickedImage = await _imagePicker.pickImage(source: ImageSource.gallery);
@@ -56,15 +61,15 @@ class _SchemeRegistrationScreenState extends State<SchemeRegistrationScreen> {
       'scheme_name': _controllers['scheme_name']!.text,
       'description': _controllers['description']!.text,
       'tags': _controllers['tags']!.text,
+      'scheme_type': _selectedSchemeType,
       'selected_option': _selectedOption,
-      'state': _selectedState,
-      'district': _selectedDistrict,
-      'sub_district': _selectedSubDistrict,
+      'state': _selectedOption == 'State' ? _selectedState : null,
+      'district': _selectedOption == 'District' ? _selectedDistrict : null,
+      'sub_district': _selectedOption == 'Sub-district' ? _selectedSubDistrict : null,
     };
 
     try {
-      // Insert data into Supabase table
-      final response = await supabase.from('schemes').insert(data);
+      final response = await supabase.from('scheme').insert(data);
 
       if (response.error == null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -86,7 +91,8 @@ class _SchemeRegistrationScreenState extends State<SchemeRegistrationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add a Scheme'),
+        title: const Center(child: Text('Add a Scheme')), // Centering the title
+        backgroundColor: Colors.blue, // Setting background color to blue
       ),
       body: Padding(
         padding: const EdgeInsets.all(30.0),
@@ -114,23 +120,32 @@ class _SchemeRegistrationScreenState extends State<SchemeRegistrationScreen> {
                     ),
                   ),
                 const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Checkbox(
-                      value: _isCheckboxChecked,
-                      onChanged: (value) {
-                        setState(() {
-                          _isCheckboxChecked = value!;
-                          if (_isCheckboxChecked) {
-                            _selectedOption = null;
-                          }
-                        });
-                      },
-                    ),
-                    const Text('Disable Select Location Type'),
-                  ],
+
+                // Dropdown for scheme type
+                DropdownButtonFormField<String>(
+                  value: _selectedSchemeType,
+                  decoration: const InputDecoration(
+                    labelText: 'Scheme Type',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: _schemeTypes
+                      .map((scheme) => DropdownMenuItem(
+                    value: scheme,
+                    child: Text(scheme),
+                  ))
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedSchemeType = value;
+                      if (_selectedSchemeType == 'National Scheme') {
+                        _selectedOption = null; // Clear location selection
+                      }
+                    });
+                  },
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 20),
+
+                // Dropdown for location type (conditionally required)
                 DropdownButtonFormField<String>(
                   value: _selectedOption,
                   decoration: const InputDecoration(
@@ -143,15 +158,24 @@ class _SchemeRegistrationScreenState extends State<SchemeRegistrationScreen> {
                     child: Text(option),
                   ))
                       .toList(),
-                  onChanged: _isCheckboxChecked
+                  onChanged: _selectedSchemeType == 'National Scheme'
                       ? null
                       : (value) {
                     setState(() {
                       _selectedOption = value;
                     });
                   },
+                  validator: (value) {
+                    if (_selectedSchemeType != 'National Scheme' &&
+                        value == null) {
+                      return 'Please select a location type';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 20),
+
+                // Conditional dropdowns based on selected option
                 if (_selectedOption == 'State')
                   _buildDropdown(
                     label: 'State',
@@ -174,6 +198,7 @@ class _SchemeRegistrationScreenState extends State<SchemeRegistrationScreen> {
                       onChanged: (value) => setState(() => _selectedSubDistrict = value),
                     ),
                 const SizedBox(height: 20),
+
                 Center(
                   child: ElevatedButton(
                     onPressed: _submitForm,
@@ -220,6 +245,8 @@ class _SchemeRegistrationScreenState extends State<SchemeRegistrationScreen> {
       ))
           .toList(),
       onChanged: onChanged,
+      validator: (value) =>
+      value == null ? 'Please select $label' : null,
     );
   }
 
